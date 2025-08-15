@@ -216,12 +216,65 @@ function insertLink() {
 
 // Insert image
 function insertImage() {
-    const url = prompt('Enter image URL:');
-    if (url) {
-        const alt = prompt('Enter alt text (optional):');
-        const img = `<img src="${url}" alt="${alt || ''}" style="max-width: 100%; height: auto;">`;
-        insertHTML(img);
-    }
+    // Create file input
+    const fileInput = document.createElement('input');
+    fileInput.type = 'file';
+    fileInput.accept = 'image/*';
+    fileInput.style.display = 'none';
+    
+    fileInput.onchange = async function(event) {
+        const file = event.target.files[0];
+        if (!file) return;
+        
+        // Show loading indicator
+        const loadingText = 'Uploading image...';
+        const tempImg = `<div style="text-align: center; padding: 20px; color: #666;">${loadingText}</div>`;
+        insertHTML(tempImg);
+        
+        try {
+            // Create FormData
+            const formData = new FormData();
+            formData.append('image', file);
+            
+            // Upload to server
+            const response = await fetch('/api/upload/image', {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${localStorage.getItem('authToken')}`
+                },
+                body: formData
+            });
+            
+            if (!response.ok) {
+                throw new Error('Upload failed');
+            }
+            
+            const result = await response.json();
+            
+            // Replace loading text with actual image
+            const alt = prompt('Enter alt text (optional):');
+            const img = `<img src="${result.url}" alt="${alt || ''}" style="max-width: 100%; height: auto; border-radius: 6px;">`;
+            
+            // Find and replace the loading text
+            const editor = document.getElementById('editor');
+            editor.innerHTML = editor.innerHTML.replace(tempImg, img);
+            
+            showNotification('Image uploaded successfully!', 'success');
+        } catch (error) {
+            console.error('Upload error:', error);
+            showNotification('Failed to upload image', 'error');
+            
+            // Remove loading text
+            const editor = document.getElementById('editor');
+            editor.innerHTML = editor.innerHTML.replace(tempImg, '');
+        }
+        
+        // Clean up
+        document.body.removeChild(fileInput);
+    };
+    
+    document.body.appendChild(fileInput);
+    fileInput.click();
 }
 
 // Insert table

@@ -1,6 +1,6 @@
 const express = require('express');
 const jwt = require('jsonwebtoken');
-const { pool } = require('../config/database');
+const { prisma } = require('../config/database');
 
 const router = express.Router();
 
@@ -24,10 +24,10 @@ const authenticateToken = (req, res, next) => {
 // Get all editor configurations for a user
 router.get('/', authenticateToken, async (req, res) => {
   try {
-    const [configs] = await pool.execute(
-      'SELECT * FROM editor_configs WHERE user_id = ? ORDER BY created_at DESC',
-      [req.user.userId]
-    );
+    const configs = await prisma.editorConfig.findMany({
+      where: { userId: req.user.userId },
+      orderBy: { createdAt: 'desc' }
+    });
 
     res.json({ configs });
   } catch (error) {
@@ -48,17 +48,16 @@ router.post('/', authenticateToken, async (req, res) => {
     // Generate embed code
     const embedCode = generateEmbedCode(configData);
 
-    const [result] = await pool.execute(
-      'INSERT INTO editor_configs (user_id, name, config_data, embed_code) VALUES (?, ?, ?, ?)',
-      [req.user.userId, name, JSON.stringify(configData), embedCode]
-    );
+    const newConfig = await prisma.editorConfig.create({
+      data: {
+        userId: req.user.userId,
+        name,
+        configData,
+        embedCode
+      }
+    });
 
-    const [newConfig] = await pool.execute(
-      'SELECT * FROM editor_configs WHERE id = ?',
-      [result.insertId]
-    );
-
-    res.status(201).json({ config: newConfig[0] });
+    res.status(201).json({ config: newConfig });
   } catch (error) {
     console.error('Create config error:', error);
     res.status(500).json({ error: 'Failed to create configuration' });
@@ -76,29 +75,30 @@ router.put('/:id', authenticateToken, async (req, res) => {
     }
 
     // Check if config belongs to user
-    const [existingConfigs] = await pool.execute(
-      'SELECT id FROM editor_configs WHERE id = ? AND user_id = ?',
-      [id, req.user.userId]
-    );
+    const existingConfig = await prisma.editorConfig.findFirst({
+      where: { 
+        id: parseInt(id),
+        userId: req.user.userId 
+      }
+    });
 
-    if (existingConfigs.length === 0) {
+    if (!existingConfig) {
       return res.status(404).json({ error: 'Configuration not found' });
     }
 
     // Generate new embed code
     const embedCode = generateEmbedCode(configData);
 
-    await pool.execute(
-      'UPDATE editor_configs SET name = ?, config_data = ?, embed_code = ? WHERE id = ?',
-      [name, JSON.stringify(configData), embedCode, id]
-    );
+    const updatedConfig = await prisma.editorConfig.update({
+      where: { id: parseInt(id) },
+      data: {
+        name,
+        configData,
+        embedCode
+      }
+    });
 
-    const [updatedConfig] = await pool.execute(
-      'SELECT * FROM editor_configs WHERE id = ?',
-      [id]
-    );
-
-    res.json({ config: updatedConfig[0] });
+    res.json({ config: updatedConfig });
   } catch (error) {
     console.error('Update config error:', error);
     res.status(500).json({ error: 'Failed to update configuration' });
@@ -111,16 +111,20 @@ router.delete('/:id', authenticateToken, async (req, res) => {
     const { id } = req.params;
 
     // Check if config belongs to user
-    const [existingConfigs] = await pool.execute(
-      'SELECT id FROM editor_configs WHERE id = ? AND user_id = ?',
-      [id, req.user.userId]
-    );
+    const existingConfig = await prisma.editorConfig.findFirst({
+      where: { 
+        id: parseInt(id),
+        userId: req.user.userId 
+      }
+    });
 
-    if (existingConfigs.length === 0) {
+    if (!existingConfig) {
       return res.status(404).json({ error: 'Configuration not found' });
     }
 
-    await pool.execute('DELETE FROM editor_configs WHERE id = ?', [id]);
+    await prisma.editorConfig.delete({
+      where: { id: parseInt(id) }
+    });
 
     res.json({ message: 'Configuration deleted successfully' });
   } catch (error) {
@@ -134,16 +138,16 @@ router.get('/:id/content', async (req, res) => {
   try {
     const { id } = req.params;
 
-    const [content] = await pool.execute(
-      'SELECT * FROM editor_content WHERE config_id = ? ORDER BY version DESC LIMIT 1',
-      [id]
-    );
+    const content = await prisma.editorContent.findFirst({
+      where: { configId: parseInt(id) },
+      orderBy: { version: 'desc' }
+    });
 
-    if (content.length === 0) {
+    if (!content) {
       return res.json({ content: null });
     }
 
-    res.json({ content: content[0] });
+    res.json({ content });
   } catch (error) {
     console.error('Get content error:', error);
     res.status(500).json({ error: 'Failed to get content' });
@@ -161,17 +165,20 @@ router.post('/:id/content', async (req, res) => {
     }
 
     // Get current version
-    const [currentContent] = await pool.execute(
-      'SELECT version FROM editor_content WHERE config_id = ? ORDER BY version DESC LIMIT 1',
-      [id]
-    );
+    const currentContent = await prisma.editorContent.findFirst({
+      where: { configId: parseInt(id) },
+      orderBy: { version: 'desc' }
+    });
 
-    const newVersion = currentContent.length > 0 ? currentContent[0].version + 1 : 1;
+    const newVersion = currentContent ? currentContent.version + 1 : 1;
 
-    const [result] = await pool.execute(
-      'INSERT INTO editor_content (config_id, content_data, version) VALUES (?, ?, ?)',
-      [id, JSON.stringify(contentData), newVersion]
-    );
+    const result = await prisma.editorContent.create({
+      data: {
+        configId: parseInt(id),
+        contentData: JSON.stringify(contentData),
+        version: newVersion
+      }
+    });
 
     res.status(201).json({ 
       message: 'Content saved successfully',

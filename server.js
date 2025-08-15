@@ -10,10 +10,12 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 
 // Database connection
-const { pool, testConnection } = require('./config/database');
+const { prisma, testConnection, initializeDatabase } = require('./config/database');
 
 // Test database connection on startup
-testConnection();
+testConnection().then(() => {
+  initializeDatabase();
+});
 
 // Middleware
 app.use(helmet());
@@ -39,6 +41,7 @@ app.use(express.static(path.join(__dirname, 'public')));
 app.use('/api/auth', require('./routes/auth'));
 app.use('/api/editors', require('./routes/editors'));
 app.use('/api/configs', require('./routes/configs'));
+app.use('/api/upload', require('./routes/upload'));
 
 // Main page route
 app.get('/', (req, res) => {

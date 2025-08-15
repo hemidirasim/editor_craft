@@ -1,7 +1,7 @@
 const express = require('express');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
-const { pool } = require('../config/database');
+const { prisma } = require('../config/database');
 
 const router = express.Router();
 
@@ -15,12 +15,11 @@ router.post('/register', async (req, res) => {
     }
 
     // Check if user already exists
-    const [existingUsers] = await pool.execute(
-      'SELECT id FROM users WHERE email = ?',
-      [email]
-    );
+    const existingUser = await prisma.user.findUnique({
+      where: { email }
+    });
 
-    if (existingUsers.length > 0) {
+    if (existingUser) {
       return res.status(400).json({ error: 'User already exists' });
     }
 
@@ -28,14 +27,17 @@ router.post('/register', async (req, res) => {
     const hashedPassword = await bcrypt.hash(password, 12);
 
     // Insert new user
-    const [result] = await pool.execute(
-      'INSERT INTO users (email, password, name) VALUES (?, ?, ?)',
-      [email, hashedPassword, name]
-    );
+    const newUser = await prisma.user.create({
+      data: {
+        email,
+        password: hashedPassword,
+        name
+      }
+    });
 
     // Generate JWT token
     const token = jwt.sign(
-      { userId: result.insertId, email },
+      { userId: newUser.id, email },
       process.env.JWT_SECRET,
       { expiresIn: '24h' }
     );
@@ -65,16 +67,13 @@ router.post('/login', async (req, res) => {
     }
 
     // Find user
-    const [users] = await pool.execute(
-      'SELECT * FROM users WHERE email = ?',
-      [email]
-    );
+    const user = await prisma.user.findUnique({
+      where: { email }
+    });
 
-    if (users.length === 0) {
+    if (!user) {
       return res.status(401).json({ error: 'Invalid credentials' });
     }
-
-    const user = users[0];
 
     // Check password
     const isValidPassword = await bcrypt.compare(password, user.password);
@@ -116,16 +115,21 @@ router.get('/me', async (req, res) => {
 
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
 
-    const [users] = await pool.execute(
-      'SELECT id, email, name, created_at FROM users WHERE id = ?',
-      [decoded.userId]
-    );
+    const user = await prisma.user.findUnique({
+      where: { id: decoded.userId },
+      select: {
+        id: true,
+        email: true,
+        name: true,
+        createdAt: true
+      }
+    });
 
-    if (users.length === 0) {
+    if (!user) {
       return res.status(404).json({ error: 'User not found' });
     }
 
-    res.json({ user: users[0] });
+    res.json({ user });
   } catch (error) {
     console.error('Get user error:', error);
     res.status(401).json({ error: 'Invalid token' });

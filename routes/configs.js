@@ -1,5 +1,5 @@
 const express = require('express');
-const { pool } = require('../config/database');
+const { prisma } = require('../config/database');
 
 const router = express.Router();
 
@@ -8,17 +8,22 @@ router.get('/:id', async (req, res) => {
   try {
     const { id } = req.params;
 
-    const [configs] = await pool.execute(
-      'SELECT id, name, config_data, embed_code FROM editor_configs WHERE id = ? AND is_active = TRUE',
-      [id]
-    );
+    const config = await prisma.editorConfig.findFirst({
+      where: { 
+        id: parseInt(id),
+        isActive: true 
+      },
+      select: {
+        id: true,
+        name: true,
+        configData: true,
+        embedCode: true
+      }
+    });
 
-    if (configs.length === 0) {
+    if (!config) {
       return res.status(404).json({ error: 'Configuration not found' });
     }
-
-    const config = configs[0];
-    config.config_data = JSON.parse(config.config_data);
 
     res.json({ config });
   } catch (error) {
@@ -32,16 +37,21 @@ router.get('/:id/embed', async (req, res) => {
   try {
     const { id } = req.params;
 
-    const [configs] = await pool.execute(
-      'SELECT embed_code FROM editor_configs WHERE id = ? AND is_active = TRUE',
-      [id]
-    );
+    const config = await prisma.editorConfig.findFirst({
+      where: { 
+        id: parseInt(id),
+        isActive: true 
+      },
+      select: {
+        embedCode: true
+      }
+    });
 
-    if (configs.length === 0) {
+    if (!config) {
       return res.status(404).json({ error: 'Configuration not found' });
     }
 
-    res.json({ embedCode: configs[0].embed_code });
+    res.json({ embedCode: config.embedCode });
   } catch (error) {
     console.error('Get embed code error:', error);
     res.status(500).json({ error: 'Failed to get embed code' });

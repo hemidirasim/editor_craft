@@ -1,83 +1,42 @@
-const mysql = require('mysql2/promise');
+const { PrismaClient } = require('@prisma/client');
 require('dotenv').config({ path: '../config.env' });
 
-const pool = mysql.createPool({
-  host: process.env.DB_HOST,
-  user: process.env.DB_USER,
-  password: process.env.DB_PASSWORD,
-  database: process.env.DB_NAME,
-  waitForConnections: true,
-  connectionLimit: 10,
-  queueLimit: 0,
-  acquireTimeout: 60000,
-  timeout: 60000,
-  reconnect: true
-});
+const prisma = new PrismaClient();
 
 // Test database connection
 async function testConnection() {
   try {
-    const connection = await pool.getConnection();
-    console.log('✅ Database connected successfully');
-    connection.release();
+    await prisma.$connect();
+    console.log('✅ Database connected successfully with Prisma');
     
-    // Initialize database tables
-    await initializeTables();
+    // Test query to ensure everything works
+    const userCount = await prisma.user.count();
+    console.log(`✅ Database is working. Total users: ${userCount}`);
   } catch (error) {
     console.error('❌ Database connection failed:', error.message);
     process.exit(1);
   }
 }
 
-// Initialize database tables
-async function initializeTables() {
+// Initialize database (create tables if they don't exist)
+async function initializeDatabase() {
   try {
-    // Users table
-    await pool.execute(`
-      CREATE TABLE IF NOT EXISTS users (
-        id INT AUTO_INCREMENT PRIMARY KEY,
-        email VARCHAR(255) UNIQUE NOT NULL,
-        password VARCHAR(255) NOT NULL,
-        name VARCHAR(255) NOT NULL,
-        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
-      )
-    `);
-
-    // Editor configurations table
-    await pool.execute(`
-      CREATE TABLE IF NOT EXISTS editor_configs (
-        id INT AUTO_INCREMENT PRIMARY KEY,
-        user_id INT NOT NULL,
-        name VARCHAR(255) NOT NULL,
-        config_data JSON NOT NULL,
-        embed_code TEXT NOT NULL,
-        is_active BOOLEAN DEFAULT TRUE,
-        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-        FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
-      )
-    `);
-
-    // Editor content table
-    await pool.execute(`
-      CREATE TABLE IF NOT EXISTS editor_content (
-        id INT AUTO_INCREMENT PRIMARY KEY,
-        config_id INT NOT NULL,
-        content_data LONGTEXT NOT NULL,
-        version INT DEFAULT 1,
-        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-        FOREIGN KEY (config_id) REFERENCES editor_configs(id) ON DELETE CASCADE
-      )
-    `);
-
+    // Prisma will automatically create tables based on the schema
+    // when we run the first query
+    await prisma.user.count();
     console.log('✅ Database tables initialized successfully');
   } catch (error) {
-    console.error('❌ Error initializing database tables:', error.message);
+    console.error('❌ Error initializing database:', error.message);
   }
 }
 
+// Graceful shutdown
+process.on('beforeExit', async () => {
+  await prisma.$disconnect();
+});
+
 module.exports = {
-  pool,
-  testConnection
+  prisma,
+  testConnection,
+  initializeDatabase
 };
