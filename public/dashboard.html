@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - EditorCraft</title>
+    <link rel="stylesheet" href="/css/style.css">
+    <link rel="stylesheet" href="/css/dashboard.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+</head>
+<body>
+    <nav class="navbar">
+        <div class="nav-container">
+            <div class="nav-logo">
+                <a href="/">
+                    <i class="fas fa-edit"></i>
+                    <span>EditorCraft</span>
+                </a>
+            </div>
+            <div class="nav-menu">
+                <a href="/" class="nav-link">Home</a>
+                <a href="/live" class="nav-link">Live Demo</a>
+                <span class="user-info" id="userInfo">
+                    <i class="fas fa-user"></i>
+                    <span id="userName">Loading...</span>
+                </span>
+                <button class="btn btn-secondary" onclick="logout()">Logout</button>
+            </div>
+        </div>
+    </nav>
+
+    <div class="dashboard-container">
+        <div class="dashboard-header">
+            <h1>Dashboard</h1>
+            <p>Manage your editor configurations and get embed codes for your websites.</p>
+        </div>
+
+        <div class="dashboard-content">
+            <div class="dashboard-sidebar">
+                <div class="sidebar-section">
+                    <h3>Quick Actions</h3>
+                    <button class="btn btn-primary btn-full" onclick="openCreateModal()">
+                        <i class="fas fa-plus"></i>
+                        Create New Editor
+                    </button>
+                    <button class="btn btn-secondary btn-full" onclick="refreshConfigs()">
+                        <i class="fas fa-refresh"></i>
+                        Refresh List
+                    </button>
+                </div>
+
+                <div class="sidebar-section">
+                    <h3>Statistics</h3>
+                    <div class="stat-card">
+                        <div class="stat-number" id="totalConfigs">0</div>
+                        <div class="stat-label">Total Configurations</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-number" id="activeConfigs">0</div>
+                        <div class="stat-label">Active Configurations</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="dashboard-main">
+                <div class="configs-header">
+                    <h2>Your Editor Configurations</h2>
+                    <div class="configs-filters">
+                        <input type="text" id="searchConfigs" placeholder="Search configurations..." onkeyup="filterConfigs()">
+                        <select id="statusFilter" onchange="filterConfigs()">
+                            <option value="all">All Status</option>
+                            <option value="active">Active</option>
+                            <option value="inactive">Inactive</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="configs-grid" id="configsGrid">
+                    <!-- Configurations will be loaded here -->
+                </div>
+
+                <div class="empty-state" id="emptyState" style="display: none;">
+                    <i class="fas fa-edit"></i>
+                    <h3>No configurations yet</h3>
+                    <p>Create your first editor configuration to get started.</p>
+                    <button class="btn btn-primary" onclick="openCreateModal()">
+                        <i class="fas fa-plus"></i>
+                        Create First Editor
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Create/Edit Configuration Modal -->
+    <div id="configModal" class="modal">
+        <div class="modal-content large">
+            <span class="close" onclick="closeConfigModal()">&times;</span>
+            <div class="config-form">
+                <h2 id="configModalTitle">Create New Editor Configuration</h2>
+                
+                <form id="configForm" onsubmit="handleConfigSubmit(event)">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Configuration Name</label>
+                            <input type="text" id="configName" required placeholder="e.g., My Blog Editor">
+                        </div>
+                    </div>
+
+                    <div class="form-section">
+                        <h3>Editor Settings</h3>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>Theme</label>
+                                <select id="configTheme">
+                                    <option value="light">Light</option>
+                                    <option value="dark">Dark</option>
+                                    <option value="blue">Blue</option>
+                                    <option value="green">Green</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label>Font Size</label>
+                                <select id="configFontSize">
+                                    <option value="14">Small</option>
+                                    <option value="16" selected>Medium</option>
+                                    <option value="18">Large</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>Height (px)</label>
+                                <input type="number" id="configHeight" value="400" min="200" max="800">
+                            </div>
+                            <div class="form-group">
+                                <label>Width</label>
+                                <select id="configWidth">
+                                    <option value="100%">Full Width</option>
+                                    <option value="800px">800px</option>
+                                    <option value="600px">600px</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-section">
+                        <h3>Features</h3>
+                        <div class="features-grid">
+                            <label class="feature-checkbox">
+                                <input type="checkbox" id="featureBold" checked>
+                                <span>Bold/Italic/Underline</span>
+                            </label>
+                            <label class="feature-checkbox">
+                                <input type="checkbox" id="featureAlignment" checked>
+                                <span>Text Alignment</span>
+                            </label>
+                            <label class="feature-checkbox">
+                                <input type="checkbox" id="featureLists" checked>
+                                <span>Bullet & Numbered Lists</span>
+                            </label>
+                            <label class="feature-checkbox">
+                                <input type="checkbox" id="featureLinks" checked>
+                                <span>Insert Links</span>
+                            </label>
+                            <label class="feature-checkbox">
+                                <input type="checkbox" id="featureImages" checked>
+                                <span>Insert Images</span>
+                            </label>
+                            <label class="feature-checkbox">
+                                <input type="checkbox" id="featureTables" checked>
+                                <span>Insert Tables</span>
+                            </label>
+                            <label class="feature-checkbox">
+                                <input type="checkbox" id="featureUndo" checked>
+                                <span>Undo/Redo</span>
+                            </label>
+                            <label class="feature-checkbox">
+                                <input type="checkbox" id="featureSave" checked>
+                                <span>Auto Save</span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <div class="form-actions">
+                        <button type="button" class="btn btn-secondary" onclick="closeConfigModal()">Cancel</button>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save"></i>
+                            Save Configuration
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Embed Code Modal -->
+    <div id="embedModal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeEmbedModal()">&times;</span>
+            <div class="embed-container">
+                <h3>Embed Code</h3>
+                <p>Copy this code and paste it into your website to embed the editor:</p>
+                
+                <div class="code-container">
+                    <textarea id="embedCode" readonly></textarea>
+                    <button class="btn btn-primary" onclick="copyEmbedCode()">
+                        <i class="fas fa-copy"></i>
+                        Copy Code
+                    </button>
+                </div>
+
+                <div class="embed-preview">
+                    <h4>Preview</h4>
+                    <div id="embedPreview"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="/js/main.js"></script>
+    <script src="/js/dashboard.js"></script>
+</body>
+</html>

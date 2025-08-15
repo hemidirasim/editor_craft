@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Live Demo - EditorCraft</title>
+    <link rel="stylesheet" href="/css/style.css">
+    <link rel="stylesheet" href="/css/editor.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+</head>
+<body>
+    <nav class="navbar">
+        <div class="nav-container">
+            <div class="nav-logo">
+                <a href="/">
+                    <i class="fas fa-edit"></i>
+                    <span>EditorCraft</span>
+                </a>
+            </div>
+            <div class="nav-menu">
+                <a href="/" class="nav-link">Home</a>
+                <a href="/dashboard" class="nav-link">Dashboard</a>
+                <button class="btn btn-primary" onclick="openAuthModal()">Get Started</button>
+            </div>
+        </div>
+    </nav>
+
+    <div class="demo-container">
+        <div class="demo-header">
+            <h1>Live Demo - EditorCraft</h1>
+            <p>Experience the power of our WYSIWYG rich text editor. Try all the features below!</p>
+        </div>
+
+        <div class="demo-controls">
+            <div class="control-group">
+                <label>Theme:</label>
+                <select id="themeSelect" onchange="changeTheme()">
+                    <option value="light">Light</option>
+                    <option value="dark">Dark</option>
+                    <option value="blue">Blue</option>
+                </select>
+            </div>
+            <div class="control-group">
+                <label>Font Size:</label>
+                <select id="fontSizeSelect" onchange="changeFontSize()">
+                    <option value="14">Small</option>
+                    <option value="16" selected>Medium</option>
+                    <option value="18">Large</option>
+                </select>
+            </div>
+            <button class="btn btn-secondary" onclick="clearContent()">
+                <i class="fas fa-trash"></i>
+                Clear Content
+            </button>
+            <button class="btn btn-primary" onclick="saveContent()">
+                <i class="fas fa-save"></i>
+                Save Content
+            </button>
+        </div>
+
+        <div class="editor-wrapper">
+            <div class="editor-toolbar" id="toolbar">
+                <div class="toolbar-group">
+                    <button class="toolbar-btn" onclick="execCommand('bold')" title="Bold">
+                        <i class="fas fa-bold"></i>
+                    </button>
+                    <button class="toolbar-btn" onclick="execCommand('italic')" title="Italic">
+                        <i class="fas fa-italic"></i>
+                    </button>
+                    <button class="toolbar-btn" onclick="execCommand('underline')" title="Underline">
+                        <i class="fas fa-underline"></i>
+                    </button>
+                    <button class="toolbar-btn" onclick="execCommand('strikeThrough')" title="Strikethrough">
+                        <i class="fas fa-strikethrough"></i>
+                    </button>
+                </div>
+
+                <div class="toolbar-group">
+                    <button class="toolbar-btn" onclick="execCommand('justifyLeft')" title="Align Left">
+                        <i class="fas fa-align-left"></i>
+                    </button>
+                    <button class="toolbar-btn" onclick="execCommand('justifyCenter')" title="Align Center">
+                        <i class="fas fa-align-center"></i>
+                    </button>
+                    <button class="toolbar-btn" onclick="execCommand('justifyRight')" title="Align Right">
+                        <i class="fas fa-align-right"></i>
+                    </button>
+                    <button class="toolbar-btn" onclick="execCommand('justifyFull')" title="Justify">
+                        <i class="fas fa-align-justify"></i>
+                    </button>
+                </div>
+
+                <div class="toolbar-group">
+                    <button class="toolbar-btn" onclick="execCommand('insertUnorderedList')" title="Bullet List">
+                        <i class="fas fa-list-ul"></i>
+                    </button>
+                    <button class="toolbar-btn" onclick="execCommand('insertOrderedList')" title="Numbered List">
+                        <i class="fas fa-list-ol"></i>
+                    </button>
+                    <button class="toolbar-btn" onclick="execCommand('outdent')" title="Decrease Indent">
+                        <i class="fas fa-outdent"></i>
+                    </button>
+                    <button class="toolbar-btn" onclick="execCommand('indent')" title="Increase Indent">
+                        <i class="fas fa-indent"></i>
+                    </button>
+                </div>
+
+                <div class="toolbar-group">
+                    <button class="toolbar-btn" onclick="insertLink()" title="Insert Link">
+                        <i class="fas fa-link"></i>
+                    </button>
+                    <button class="toolbar-btn" onclick="insertImage()" title="Insert Image">
+                        <i class="fas fa-image"></i>
+                    </button>
+                    <button class="toolbar-btn" onclick="insertTable()" title="Insert Table">
+                        <i class="fas fa-table"></i>
+                    </button>
+                </div>
+
+                <div class="toolbar-group">
+                    <button class="toolbar-btn" onclick="execCommand('undo')" title="Undo">
+                        <i class="fas fa-undo"></i>
+                    </button>
+                    <button class="toolbar-btn" onclick="execCommand('redo')" title="Redo">
+                        <i class="fas fa-redo"></i>
+                    </button>
+                </div>
+            </div>
+
+            <div class="editor-content" id="editor" contenteditable="true">
+                <h2>Welcome to EditorCraft Live Demo!</h2>
+                <p>This is a fully functional WYSIWYG rich text editor. You can:</p>
+                <ul>
+                    <li><strong>Format text</strong> using the toolbar buttons above</li>
+                    <li><em>Change themes</em> using the theme selector</li>
+                    <li><u>Insert links and images</u> with the media buttons</li>
+                    <li>Create <span style="color: #007bff;">colored text</span> and more!</li>
+                </ul>
+                <p>Try editing this content to see how powerful EditorCraft is!</p>
+            </div>
+        </div>
+
+        <div class="demo-info">
+            <div class="info-card">
+                <h3>Features Demonstrated</h3>
+                <ul>
+                    <li>Real-time text formatting</li>
+                    <li>Multiple themes and customization</li>
+                    <li>Image and link insertion</li>
+                    <li>Table creation</li>
+                    <li>Undo/Redo functionality</li>
+                    <li>Content saving and loading</li>
+                </ul>
+            </div>
+            <div class="info-card">
+                <h3>Ready to Use?</h3>
+                <p>Get your own customizable editor configuration and embed it into your website!</p>
+                <button class="btn btn-primary" onclick="openAuthModal()">
+                    <i class="fas fa-rocket"></i>
+                    Start Building
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Auth Modal -->
+    <div id="authModal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeAuthModal()">&times;</span>
+            <div class="auth-container">
+                <div class="auth-tabs">
+                    <button class="auth-tab active" onclick="switchTab('login')">Login</button>
+                    <button class="auth-tab" onclick="switchTab('register')">Register</button>
+                </div>
+                
+                <div id="loginForm" class="auth-form">
+                    <h3>Welcome Back</h3>
+                    <form onsubmit="handleLogin(event)">
+                        <div class="form-group">
+                            <label>Email</label>
+                            <input type="email" id="loginEmail" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Password</label>
+                            <input type="password" id="loginPassword" required>
+                        </div>
+                        <button type="submit" class="btn btn-primary btn-full">Login</button>
+                    </form>
+                </div>
+
+                <div id="registerForm" class="auth-form" style="display: none;">
+                    <h3>Create Account</h3>
+                    <form onsubmit="handleRegister(event)">
+                        <div class="form-group">
+                            <label>Name</label>
+                            <input type="text" id="registerName" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Email</label>
+                            <input type="email" id="registerEmail" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Password</label>
+                            <input type="password" id="registerPassword" required>
+                        </div>
+                        <button type="submit" class="btn btn-primary btn-full">Register</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="/js/main.js"></script>
+    <script src="/js/editor.js"></script>
+</body>
+</html>
